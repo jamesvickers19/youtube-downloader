@@ -12,7 +12,7 @@
 ; (duration-to-seconds "1:30") => 90
 (defn duration-to-seconds [s]
   (let [amounts (map parse-int (-> s (.split ":") reverse))
-        to-seconds (fn [idx num] (* num (Math/pow 60 idx)))]
+        to-seconds (fn [idx num] (int (* num (Math/pow 60 idx))))]
     (reduce + (map-indexed to-seconds amounts))))
 
 (defn get-video ^YoutubeVideo [video-id]
