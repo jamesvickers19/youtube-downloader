@@ -35,8 +35,9 @@
   {:start (duration-to-seconds start) :name name})
 
 (defn get-sections
-  ([^YoutubeVideo vid]
-   (get-sections (video-description vid) (-> vid .details .lengthSeconds)))
+  ([video-id]
+   (let [vid (get-video video-id)]
+     (get-sections (video-description vid) (-> vid .details .lengthSeconds))))
   ([description overall-length]
    (let [sections (->> description section-strings (map make-section) (sort-by :start))
          with-end-time (fn [idx m]
