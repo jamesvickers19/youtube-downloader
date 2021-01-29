@@ -86,7 +86,25 @@
    {:start 6870, :name "SPYDER550 - GODDD MODE", :end 7082}
    {:start 7082, :name "ViNi $AN - FOR REAL", :end 7227}])
 
+(def midnight-aura-sections
+  [{:start 0, :name "miscél - When You Left", :end 164}
+   {:start 164, :name "Jay-Lounge & Jordy Chandra - Puddles", :end 370}
+   {:start 370, :name "hoogway - soulful eyes", :end 548}
+   {:start 548, :name "Jordy Chandra - Reminiscing Night", :end 760}
+   {:start 760, :name "WYS - Have A Beer", :end 938}
+   {:start 938, :name "lofty - locked away (ft. imfinenow)", :end 1028}
+   {:start 1028, :name "Jordy Chandra - Talking to You On a Rain Day", :end 1176}
+   {:start 1176, :name "biosphere - when in rome", :end 1320}
+   {:start 1320, :name "Nohone - Nothing But A Dream", :end 1486}
+   {:start 1486, :name "BeyondChivalry - r e l a x i n g", :end 1608}
+   {:start 1608, :name "bace - the train (where i met you)", :end 1796}
+   {:start 1796, :name "Dragon Roots - October", :end 1980}
+   {:start 1980, :name "Styn, Sebastian Kamae & Sleepermane - Bonsai", :end 2126}
+   {:start 2126, :name "Chef Boy RJ - Moss Garden", :end 2256}
+   {:start 2256, :name "Poik Lounge - Feeling Ocean", :end 2355}])
+
 (deftest get-sections-from-youtube-tests
   (is (= lofi-cozy-winter-sections (get-sections "_tV5LEBDs7w")))
-  (is (= trappin-in-paradise-50-sections (get-sections "HjxZYiTpU3k"))))
+  (is (= trappin-in-paradise-50-sections (get-sections "HjxZYiTpU3k")))
+  (is (= midnight-aura-sections (get-sections "tgI6PjEq0O8"))))
 
