@@ -58,5 +58,5 @@
 
 
 (comment
-  (get-sections (get-video "HjxZYiTpU3k"))
+  (get-sections "HjxZYiTpU3k")
   (download-audio "HjxZYiTpU3k" "C:\\Users\\james\\Downloads\\" "test"))

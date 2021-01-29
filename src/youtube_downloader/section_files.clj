@@ -1,9 +1,6 @@
 (ns youtube-downloader.section-files
-  (:require [clojure.java.shell :refer [sh]]
-            [ring.util.io :as ring-io]
-            [clojure.java.io :as io])
-  (:import (java.io File)
-           (java.util.zip ZipOutputStream ZipEntry)))
+  (:require [clojure.java.shell :refer [sh]])
+  (:import (java.io File)))
 
 
 (defn dir [filename]
@@ -37,15 +34,3 @@
     (if (seq failures)
       (throw (Exception. (str (vec (map #(:err @%) failures)))))
       (map :output sections))))
-
-(defn zip-files
-  "Returns an inputstream (piped-input-stream) to be used directly in Ring HTTP responses"
-  [files]
-  (ring-io/piped-input-stream
-    (fn [output-stream]
-      (with-open [zip-output-stream (ZipOutputStream. output-stream)]
-        (doseq [file files]
-          (let [f (io/file file)]
-            (.putNextEntry zip-output-stream (ZipEntry. (.getName f)))
-            (io/copy f zip-output-stream)
-            (.closeEntry zip-output-stream)))))))
