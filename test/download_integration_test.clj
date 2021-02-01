@@ -1,6 +1,11 @@
 (ns download_integration_test
   (:require [clojure.test :refer :all]
-            [youtube_downloader.download :refer :all]))
+            [clojure.tools.trace :refer :all]
+            [youtube_downloader.download :refer :all]
+            [youtube-downloader.section-files :refer :all]
+            [youtube-downloader.files :refer :all]
+            [clojure.java.io :as io])
+  (:import (java.io File)))
 
 (def lofi-cozy-winter-sections
   [{:start 0, :name "Team Astro - Over The Moon", :end 173}
@@ -103,8 +108,24 @@
    {:start 2126, :name "Chef Boy RJ - Moss Garden", :end 2256}
    {:start 2256, :name "Poik Lounge - Feeling Ocean", :end 2355}])
 
+(def midnight-aura-video-id "tgI6PjEq0O8")
+
 (deftest get-sections-from-youtube-tests
   (is (= lofi-cozy-winter-sections (get-sections "_tV5LEBDs7w")))
   (is (= trappin-in-paradise-50-sections (get-sections "HjxZYiTpU3k")))
-  (is (= midnight-aura-sections (get-sections "tgI6PjEq0O8"))))
+  (is (= midnight-aura-sections (get-sections midnight-aura-video-id))))
 
+(defn assert-file [f]
+  (is (= true (file-exists? f)) (str "Expected " f " to exist")))
+
+(deftest download-audio-tests
+  (let [filename (str (System/getProperty "user.dir") File/separator "test")
+        created-file (str filename ".m4a")
+        sections [{:name "a_name!" :start 0 :end 3}
+                  {:name "name with spaces" :start 5 :end 7}]]
+    (do
+      (download-audio midnight-aura-video-id filename)
+      (assert-file created-file)
+      (let [sectioned-files (section-file created-file sections)]
+        (for [f sectioned-files] (assert-file f))
+        (doall (map #(io/delete-file %) (conj sectioned-files created-file)))))))

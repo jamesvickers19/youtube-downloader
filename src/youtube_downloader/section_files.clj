@@ -1,16 +1,14 @@
 (ns youtube-downloader.section-files
-  (:require [clojure.java.shell :refer [sh]])
+  (:require [clojure.java.shell :refer [sh]]
+            [youtube-downloader.files :refer [dir]])
   (:import (java.io File)))
 
-
-(defn dir [filename]
-  (.getParent (File. filename)))
 
 (defn quoted [s] (str "\"" s "\""))
 
 (defn output-mp4-filename
   [input-file name]
-  (quoted (str (dir input-file) File/separator name ".mp4")))
+  (str (dir input-file) File/separator name ".mp4"))
 
 ; TODO make this a bash script with a couple args?
 (defn ffmpeg-args

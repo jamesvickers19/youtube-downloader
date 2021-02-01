@@ -1,6 +1,7 @@
 (ns youtube_downloader.download
   (:require [clojure.tools.trace :refer :all]
-            [clojure.string :refer [split-lines]])
+            [clojure.string :refer [split-lines]]
+            [youtube-downloader.files :refer :all])
   (:import
     (java.io File)
     (com.github.kiulian.downloader YoutubeDownloader)
@@ -51,10 +52,11 @@
     (apply max-key #(.averageBitrate %) formats)))
 
 (defn download-audio
-  [video-id out-dir filename]
+  [video-id filename]
   (let [vid (get-video video-id)
-        audioFormat (highest-quality-mp4 vid)]
-    (.download vid audioFormat (File. out-dir) filename true)))
+        audioFormat (highest-quality-mp4 vid)
+        out-dir (dir filename)]
+    (.download vid audioFormat (File. out-dir) (file-name filename) true)))
 
 
 (comment
