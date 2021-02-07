@@ -1,5 +1,5 @@
 (ns youtube-downloader.core
-  (:require [compojure.core :refer [defroutes GET POST]]
+  (:require [compojure.core :refer [defroutes GET POST OPTIONS]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.adapter.jetty :as ring]
@@ -24,29 +24,37 @@
             (io/copy f zip-output-stream)
             (.closeEntry zip-output-stream)))))))
 
-(defn get-sections-handler
+; TODO use middleware or something
+(def allow-all-origin-header
+  {"Access-Control-Allow-Origin" "*"
+   "Access-Control-Allow-Headers" "*"
+   "Access-Control-Allow-Methods" "GET, POST, OPTIONS"})
+
+(defn sections-handler
   [video-id]
-  {:headers {"Content-type" "application/json"
-             "Access-Control-Allow-Origin" "*"}
+  {:headers (merge allow-all-origin-header {"Content-type" "application/json"})
    :body    (json/write-str (get-sections video-id))})
 
-(defn download-files-zip
+(defn download-handler
   [{{:keys [video-id sections]} :params}]
+  (println "video-id:" video-id ", sections:" sections)
   (let [filename "C:\\Users\\james\\Downloads\\test" ; TODO make temporary dir
         file (download-audio video-id filename)
         downloaded-filename (.getAbsolutePath file)
         sections (section-file downloaded-filename sections)]
     {:status 200
-     :headers {"Content-Type" "application/zip, application/octet-stream"
-               "Content-Disposition" "attachment; filename=\"files.zip\""}
+     :headers (merge allow-all-origin-header
+                     {"Content-Type" "application/zip, application/octet-stream"
+                      "Content-Disposition" "attachment; filename=\"files.zip\""})
      :body (zip-files sections)}))
 
 (defn json-handler [handler]
   (-> handler wrap-keyword-params wrap-json-params))
 
 (defroutes routes
-   (GET "/sections/:v" [v] (get-sections-handler v))
-   (POST "/download" req ((json-handler download-files-zip) req)))
+  (GET "/sections/:v" [v] (sections-handler v))
+  (POST "/download" req ((json-handler download-handler) req))
+  (OPTIONS "/download" req {:status 200 :headers allow-all-origin-header}))
 
 (defn -main []
   (ring/run-jetty #'routes {:port 8080 :join? false}))
