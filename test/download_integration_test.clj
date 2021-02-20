@@ -134,7 +134,7 @@
         filename (str directory "test")
         expected-file (str filename ".m4a")
         name1 "a_name!"
-        name2 "name with spaces"
+        name2 "foo w / bar"
         sections [{:name name1 :start 0 :end 1}
                   {:name name2 :start 5 :end 7}]]
     (do
@@ -142,7 +142,7 @@
       (assert-file expected-file)
       (is (= 38109449 (content-length expected-file)))
       (let [sectioned-files (section-file expected-file sections)
-            expected-section-files (map #(mp4-filename (str directory (:name %))) sections)]
+            expected-section-files (map #(str directory %) [(str name1 ".mp4") "foo w  bar.mp4"])]
         (is (= expected-section-files sectioned-files))
         (doall (map assert-file expected-section-files))
         (is (= [16801 34012] (map content-length expected-section-files)))

@@ -6,9 +6,14 @@
 
 (defn quoted [s] (str "\"" s "\""))
 
+; TODO better cleaning, security sanitation; maybe babashka would help with this?
+(defn clean-filename [filename]
+  (-> filename
+      (.replace "/" "")))
+
 (defn output-mp4-filename
   [input-file name]
-  (str (dir input-file) File/separator name ".mp4"))
+  (str (dir input-file) File/separator (clean-filename name) ".mp4"))
 
 ; TODO make this a bash script with a couple args?
 (defn ffmpeg-args
