@@ -44,8 +44,7 @@
         sections (section-file downloaded-filename sections)]
     {:status 200
      :headers (merge allow-all-origin-header
-                     {"Content-Type" "application/zip, application/octet-stream"
-                      "Content-Disposition" "attachment; filename=\"files.zip\""})
+                     {"Content-Type" "application/octet-stream; charset=utf-8"})
      :body (zip-files sections)}))
 
 (defn json-handler [handler]
