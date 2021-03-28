@@ -6,7 +6,6 @@
 
 (defn quoted [s] (str "\"" s "\""))
 
-; TODO better cleaning, security sanitation; maybe babashka would help with this?
 (defn clean-filename [filename]
   (-> filename
       (.replace "/" "")))
