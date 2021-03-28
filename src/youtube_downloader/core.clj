@@ -10,7 +10,8 @@
             [ring.util.io :as ring-io]
             [clojure.java.io :as io]
             [clojure.tools.trace :refer :all])
-  (:import (java.util.zip ZipOutputStream ZipEntry)))
+  (:import (java.util.zip ZipOutputStream ZipEntry)
+           (java.io File)))
 
 (defn zip-files
   "Returns an inputstream (piped-input-stream) to be used directly in Ring HTTP responses"
@@ -30,16 +31,25 @@
    "Access-Control-Allow-Headers" "*"
    "Access-Control-Allow-Methods" "GET, POST, OPTIONS"})
 
+; TODO make temporary dir
+(def base-filename "C:\\Users\\james\\Downloads\\test")
+
 (defn sections-handler
   [video-id]
   {:headers (merge allow-all-origin-header {"Content-type" "application/json"})
    :body    (json/write-str (get-sections video-id))})
 
+(defn download-video-handler
+  [video-id]
+  {:headers (merge allow-all-origin-header
+                   {"Content-Type" "application/octet-stream; charset=utf-8"})
+   ; TODO rename as video name, or make download-audio do that; also have it include extension
+   :body (download-audio video-id base-filename)})
+
 (defn download-handler
   [{{:keys [video-id sections]} :params}]
   (println "video-id:" video-id ", sections:" sections)
-  (let [filename "C:\\Users\\james\\Downloads\\test" ; TODO make temporary dir
-        file (download-audio video-id filename)
+  (let [file (download-audio video-id base-filename)
         downloaded-filename (.getAbsolutePath file)
         sections (section-file downloaded-filename sections)]
     {:status 200
@@ -52,6 +62,7 @@
 
 (defroutes routes
   (GET "/sections/:v" [v] (sections-handler v))
+  (GET "/download/:v" [v] (download-video-handler v))
   (POST "/download" req ((json-handler download-handler) req))
   (OPTIONS "/download" req {:status 200 :headers allow-all-origin-header}))
 
