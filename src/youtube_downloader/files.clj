@@ -2,11 +2,11 @@
   (:require [clojure.java.io :as io])
   (:import (java.io File)))
 
-(defn dir [path]
+(defn ^String dir [^String path]
   (.getParent (File. path)))
 
-(defn file-name [path]
+(defn ^String file-name [^String path]
   (.getName (File. path)))
 
-(defn file-exists? [path]
+(defn file-exists? [^String path]
   (.exists (io/file path)))

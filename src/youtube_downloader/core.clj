@@ -4,8 +4,8 @@
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.adapter.jetty :as ring]
             [ring.util.response :refer [response]]
-            [youtube_downloader.download :refer [download-audio get-sections]]
-            [youtube-downloader.section-files :refer [section-file]]
+            [youtube_downloader.download :refer [download-audio get-sections get-video video-title]]
+            [youtube-downloader.section-files :refer [clean-filename section-file]]
             [clojure.data.json :as json]
             [ring.util.io :as ring-io]
             [clojure.java.io :as io]
@@ -32,7 +32,7 @@
    "Access-Control-Allow-Methods" "GET, POST, OPTIONS"})
 
 ; TODO make temporary dir
-(def base-filename "C:\\Users\\james\\Downloads\\test")
+(def base-dir "C:\\Users\\james\\Downloads\\test\\")
 
 (defn sections-handler
   [video-id]
@@ -43,15 +43,12 @@
   [video-id]
   {:headers (merge allow-all-origin-header
                    {"Content-Type" "application/octet-stream; charset=utf-8"})
-   ; TODO rename as video name, or make download-audio do that; also have it include extension
-   :body (download-audio video-id base-filename)})
+   :body (download-audio video-id base-dir)})
 
 (defn download-handler
   [{{:keys [video-id sections]} :params}]
-  (println "video-id:" video-id ", sections:" sections)
-  (let [file (download-audio video-id base-filename)
-        downloaded-filename (.getAbsolutePath file)
-        sections (section-file downloaded-filename sections)]
+  (let [file (download-audio video-id base-dir)
+        sections (section-file (.getAbsolutePath file) sections)]
     {:status 200
      :headers (merge allow-all-origin-header
                      {"Content-Type" "application/octet-stream; charset=utf-8"})
