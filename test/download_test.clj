@@ -15,11 +15,11 @@
   (is (= 5025 (duration-to-seconds "01:23:45"))))
 
 (deftest get-sections-tests
- (is (= {:name "video name"
+ (is (= {:title "video name"
          :length 1234
          :sections []}
         (get-sections "video name" "no timestamps in here" 1234)))
- (is (= {:name "vid name"
+ (is (= {:title "vid name"
          :length 180
          :sections [(section-map 12 154 "a name")
                     (section-map 154 180 "another name")]}
