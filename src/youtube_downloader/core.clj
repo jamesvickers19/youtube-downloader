@@ -34,11 +34,6 @@
 ; TODO make temporary dir
 (def base-dir "C:\\Users\\james\\Downloads\\test\\")
 
-(defn title-handler
-  [video-id]
-  {:headers (merge allow-all-origin-header {"Content-type" "application/text"})
-   :body (video-title (get-video video-id))})
-
 (defn sections-handler
   [video-id]
   {:headers (merge allow-all-origin-header {"Content-type" "application/json"})
@@ -63,7 +58,6 @@
   (-> handler wrap-keyword-params wrap-json-params))
 
 (defroutes routes
-  (GET "/title/:v" [v] (title-handler v))
   (GET "/sections/:v" [v] (sections-handler v))
   (GET "/download/:v" [v] (download-video-handler v))
   (POST "/download" req ((json-handler download-handler) req))

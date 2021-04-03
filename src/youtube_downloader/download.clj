@@ -44,13 +44,13 @@
   ([video-id]
    (let [vid (get-video video-id)]
      (get-sections (video-title vid) (video-description vid) (video-length vid))))
-  ([name description overall-length]
+  ([title description overall-length]
    (let [sections (->> description section-strings (map make-section) (sort-by :start))
          with-end-time (fn [idx m]
                          (let [end (or (:start (next-or-nil sections idx))
                                        overall-length)]
                            (assoc m :end end)))]
-     {:name name
+     {:title title
       :length overall-length
       :sections (map-indexed with-end-time sections)})))
 
