@@ -71,12 +71,16 @@
   [video-id]
   (let [vid (get-video video-id)
         audioFormat (highest-quality-mp4 vid)
-        url (.url audioFormat)]
-    (client/get url {:as :byte-array})))
+        url (.url audioFormat)
+        response (client/get url {:as :byte-array})
+        status (:status response)]
+    (if (not= 200 status)
+      (throw (Exception. "Bad status code for audio" status))
+      (:body response))))
 
 (comment
   (get-sections "HjxZYiTpU3k")
   (download-audio "HjxZYiTpU3k" "C:\\Users\\james\\Downloads\\" "test")
   (let [response (download-audio-stream "2dNGPkoDzh0")]
     (with-open [w (java.io.BufferedOutputStream. (java.io.FileOutputStream. "C:\\Users\\james\\Downloads\\test.mp4"))]
-      (.write w (:body response)))))
+      (.write w response))))
