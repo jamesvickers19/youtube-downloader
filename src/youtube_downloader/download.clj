@@ -1,7 +1,8 @@
 (ns youtube_downloader.download
   (:require [clojure.tools.trace :refer :all]
             [clojure.string :refer [split-lines]]
-            [youtube-downloader.files :refer :all])
+            [youtube-downloader.files :refer :all]
+            [clj-http.client :as client])
   (:import
     (java.io File)
     (com.github.kiulian.downloader YoutubeDownloader)
@@ -66,7 +67,16 @@
         out-dir (dir filename)]
     (.download vid audioFormat (File. out-dir) (file-name filename) true)))
 
+(defn download-audio-stream
+  [video-id]
+  (let [vid (get-video video-id)
+        audioFormat (highest-quality-mp4 vid)
+        url (.url audioFormat)]
+    (client/get url {:as :byte-array})))
 
 (comment
   (get-sections "HjxZYiTpU3k")
-  (download-audio "HjxZYiTpU3k" "C:\\Users\\james\\Downloads\\" "test"))
+  (download-audio "HjxZYiTpU3k" "C:\\Users\\james\\Downloads\\" "test")
+  (let [response (download-audio-stream "2dNGPkoDzh0")]
+    (with-open [w (java.io.BufferedOutputStream. (java.io.FileOutputStream. "C:\\Users\\james\\Downloads\\test.mp4"))]
+      (.write w (:body response)))))
