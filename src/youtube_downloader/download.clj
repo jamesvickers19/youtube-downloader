@@ -67,7 +67,7 @@
         out-dir (dir filename)]
     (.download vid audioFormat (File. out-dir) (file-name filename) true)))
 
-(defn download-audio-stream
+(defn download-audio-bytes
   [video-id]
   (let [vid (get-video video-id)
         audioFormat (highest-quality-mp4 vid)
@@ -81,6 +81,6 @@
 (comment
   (get-sections "HjxZYiTpU3k")
   (download-audio "HjxZYiTpU3k" "C:\\Users\\james\\Downloads\\" "test")
-  (let [response (download-audio-stream "2dNGPkoDzh0")]
+  (let [response (download-audio-bytes "2dNGPkoDzh0")]
     (with-open [w (java.io.BufferedOutputStream. (java.io.FileOutputStream. "C:\\Users\\james\\Downloads\\test.mp4"))]
       (.write w response))))

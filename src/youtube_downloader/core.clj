@@ -4,25 +4,26 @@
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.adapter.jetty :as ring]
             [ring.util.response :refer [response]]
-            [youtube_downloader.download :refer [download-audio get-sections get-video video-title]]
-            [youtube-downloader.section-files :refer [clean-filename section-file]]
+            [youtube_downloader.download :refer [download-audio-bytes get-sections get-video video-title]]
+            [youtube-downloader.section-files :refer [clean-filename]]
+            [youtube-downloader.section-videos :refer [section-video]]
             [clojure.data.json :as json]
             [ring.util.io :as ring-io]
             [clojure.java.io :as io]
             [clojure.tools.trace :refer :all])
-  (:import (java.util.zip ZipOutputStream ZipEntry)
-           (java.io File)))
+  (:import (java.util.zip ZipOutputStream ZipEntry)))
 
 (defn zip-files
   "Returns an inputstream (piped-input-stream) to be used directly in Ring HTTP responses"
-  [files]
+  [sections] ; TODO destructure?
   (ring-io/piped-input-stream
     (fn [output-stream]
       (with-open [zip-output-stream (ZipOutputStream. output-stream)]
-        (doseq [file files]
-          (let [f (io/file file)]
-            (.putNextEntry zip-output-stream (ZipEntry. (.getName f)))
-            (io/copy f zip-output-stream)
+        (doseq [section sections]
+          (let [^String name (:name section)
+                bytes (get-in section [:result :out])]
+            (.putNextEntry zip-output-stream (ZipEntry. name))
+            (io/copy bytes zip-output-stream)
             (.closeEntry zip-output-stream)))))))
 
 ; TODO use middleware or something
@@ -30,9 +31,6 @@
   {"Access-Control-Allow-Origin" "*"
    "Access-Control-Allow-Headers" "*"
    "Access-Control-Allow-Methods" "GET, POST, OPTIONS"})
-
-; TODO make temporary dir
-(def base-dir "C:\\Users\\james\\Downloads\\test\\")
 
 (defn sections-handler
   [video-id]
@@ -43,16 +41,21 @@
   [video-id]
   {:headers (merge allow-all-origin-header
                    {"Content-Type" "application/octet-stream; charset=utf-8"})
-   :body (download-audio video-id base-dir)})
+   :body (download-audio-bytes video-id)})
 
 (defn download-handler
   [{{:keys [video-id sections]} :params}]
-  (let [file (download-audio video-id base-dir)
-        sections (section-file (.getAbsolutePath file) sections)]
-    {:status 200
-     :headers (merge allow-all-origin-header
-                     {"Content-Type" "application/octet-stream; charset=utf-8"})
-     :body (zip-files sections)}))
+  (let [audio-bytes (download-audio-bytes video-id)
+        sections (section-video audio-bytes sections)
+        failures (filter #(not= 0 (get-in % [:result :exit])) sections)]
+    (if (seq failures)
+      {:status 500
+       :headers {"Content-Type" "application/text"}
+       :body (str (vec (map #(get-in % [:result :err] failures))))}
+      {:status 200
+       :headers (merge allow-all-origin-header
+                       {"Content-Type" "application/octet-stream; charset=utf-8"})
+       :body (zip-files sections)})))
 
 (defn json-handler [handler]
   (-> handler wrap-keyword-params wrap-json-params))

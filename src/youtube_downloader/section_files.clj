@@ -3,7 +3,6 @@
             [youtube-downloader.files :refer [dir]])
   (:import (java.io File)))
 
-
 (defn quoted [s] (str "\"" s "\""))
 
 (defn clean-filename [filename]
@@ -14,7 +13,6 @@
   [input-file name]
   (str (dir input-file) File/separator (clean-filename name) ".mp4"))
 
-; TODO make this a bash script with a couple args?
 (defn ffmpeg-args
   [input {:keys [start end output]}]
   ["ffmpeg" "-y" "-i" (quoted input) "-ss" (str start) "-t" (str (- end start)) output])
