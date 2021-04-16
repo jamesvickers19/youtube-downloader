@@ -16,8 +16,6 @@
         to-seconds (fn [idx num] (int (* num (Math/pow 60 idx))))]
     (reduce + (map-indexed to-seconds amounts))))
 
-(defn get-video ^YoutubeVideo [video-id]
-  (.getVideo (YoutubeDownloader.) video-id))
 
 (defn video-description [^YoutubeVideo video]
   (-> video .details .description))
@@ -27,6 +25,18 @@
 
 (defn video-length [^YoutubeVideo video]
   (-> video .details .lengthSeconds))
+
+(defn live-video? [^YoutubeVideo video]
+  (-> video .details .isLiveContent))
+
+(defn get-video ^YoutubeVideo [video-id]
+  (.getVideo (YoutubeDownloader.) video-id))
+
+(defn get-video-not-live ^YoutubeVideo [video-id]
+  (let [v (get-video video-id)]
+    (if (live-video? v)
+      (throw (Exception. (str "Video '" video-id "' is a live video")))
+      v)))
 
 (defn next-or-nil
   [coll idx]
@@ -43,7 +53,7 @@
 
 (defn get-sections
   ([video-id]
-   (let [vid (get-video video-id)]
+   (let [vid (get-video-not-live video-id)]
      (get-sections (video-title vid) (video-description vid) (video-length vid))))
   ([title description overall-length]
    (let [sections (->> description section-strings (map make-section) (sort-by :start))
@@ -62,14 +72,14 @@
 
 (defn download-audio
   [video-id filename]
-  (let [vid (get-video video-id)
+  (let [vid (get-video-not-live video-id)
         audioFormat (highest-quality-mp4 vid)
         out-dir (dir filename)]
     (.download vid audioFormat (File. out-dir) (file-name filename) true)))
 
 (defn download-audio-bytes
   [video-id]
-  (let [vid (get-video video-id)
+  (let [vid (get-video-not-live video-id)
         audioFormat (highest-quality-mp4 vid)
         url (.url audioFormat)
         response (client/get url {:as :byte-array})
