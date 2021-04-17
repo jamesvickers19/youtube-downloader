@@ -65,7 +65,9 @@
     (try (handler request)
          (catch Exception e
            {:status 500
-            :body (.getMessage e)}))))
+            :body (.getMessage e)
+            :headers (merge allow-all-origin-header
+                            {"Content-Type" "application/text"})}))))
 
 (defroutes routes
   (GET "/sections/:v" [v] ((wrap-exception sections-handler) v))
