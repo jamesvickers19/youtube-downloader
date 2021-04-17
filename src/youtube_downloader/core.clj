@@ -60,10 +60,17 @@
 (defn json-handler [handler]
   (-> handler wrap-keyword-params wrap-json-params))
 
+(defn wrap-exception [handler]
+  (fn [request]
+    (try (handler request)
+         (catch Exception e
+           {:status 500
+            :body (.getMessage e)}))))
+
 (defroutes routes
-  (GET "/sections/:v" [v] (sections-handler v))
-  (GET "/download/:v" [v] (download-video-handler v))
-  (POST "/download" req ((json-handler download-handler) req))
+  (GET "/sections/:v" [v] ((wrap-exception sections-handler) v))
+  (GET "/download/:v" [v] ((wrap-exception download-video-handler) v))
+  (POST "/download" req ((-> download-handler json-handler wrap-exception) req))
   (OPTIONS "/download" req {:status 200 :headers allow-all-origin-header}))
 
 (defn -main []
