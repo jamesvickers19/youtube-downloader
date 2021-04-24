@@ -10,3 +10,9 @@
 
 (defn file-exists? [^String path]
   (.exists (io/file path)))
+
+(defn quoted [s] (str "\"" s "\""))
+
+(defn clean-filename [filename]
+  (-> filename
+      (.replace "/" "")))

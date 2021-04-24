@@ -5,7 +5,6 @@
             [ring.adapter.jetty :as ring]
             [ring.util.response :refer [response]]
             [youtube_downloader.download :refer [download-audio-bytes get-sections get-video video-title]]
-            [youtube-downloader.section-files :refer [clean-filename]]
             [youtube-downloader.section-videos :refer [section-video]]
             [clojure.data.json :as json]
             [ring.util.io :as ring-io]

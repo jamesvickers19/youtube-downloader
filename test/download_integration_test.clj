@@ -7,11 +7,13 @@
 (def video-id "qz1EpqwMmf4")
 
 (deftest get-sections-from-youtube-tests
-  (is (= [{:start 0 :end 2 :name "section 1"}
-          {:start 2 :end 3 :name "section 2"}]
+  (is (= {:title "Voldemort Laughing"
+          :length 3
+          :sections [{:start 0 :end 2 :name "section 1"}
+                     {:start 2 :end 3 :name "section 2"}]}
          (get-sections video-id))))
 
-(defn assert-bytes [byte-arr] ; TODO check length?
+(defn assert-bytes [byte-arr]
   (is (> (alength byte-arr) 0)))
 
 (deftest download-audio-tests
