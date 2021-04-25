@@ -46,11 +46,13 @@
   [{{:keys [video-id sections]} :params}]
   (let [audio-bytes (download-audio-bytes video-id)
         sections (section-video audio-bytes sections)
-        failures (filter #(not= 0 (get-in % [:result :exit])) sections)]
+        failures (filter #(not= 0 (get-in % [:result :exit])) sections)
+        error-messages (vec (map #(get-in % [:result :err]) failures))]
     (if (seq failures)
       {:status 500
        :headers {"Content-Type" "application/text"}
-       :body (str (vec (map #(get-in % [:result :err] failures))))}
+       :body "Failed to download sections"}
+      ;:body (str error-messages)} ; TODO log error messages
       {:status 200
        :headers (merge allow-all-origin-header
                        {"Content-Type" "application/octet-stream; charset=utf-8"})
