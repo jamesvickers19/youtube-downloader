@@ -3,14 +3,16 @@
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.json :refer [wrap-json-params]]
             [ring.adapter.jetty :as ring]
-            [ring.util.response :refer [response]]
+            [ring.middleware.resource :refer [wrap-resource]]
+            [ring.util.response :refer [resource-response]]
             [youtube_downloader.download :refer [download-audio-bytes get-sections get-video video-title]]
             [youtube-downloader.section-videos :refer [section-video]]
             [clojure.data.json :as json]
             [ring.util.io :as ring-io]
             [clojure.java.io :as io]
             [clojure.tools.trace :refer :all])
-  (:import (java.util.zip ZipOutputStream ZipEntry)))
+  (:import (java.util.zip ZipOutputStream ZipEntry))
+  (:gen-class))
 
 (defn zip-files
   "Returns an inputstream (piped-input-stream) to be used directly in Ring HTTP responses"
@@ -71,10 +73,15 @@
                             {"Content-Type" "application/text"})}))))
 
 (defroutes routes
+  (GET "/" [] (resource-response "public/index.html"))
   (GET "/sections/:v" [v] ((wrap-exception sections-handler) v))
   (GET "/download/:v" [v] ((wrap-exception download-video-handler) v))
   (POST "/download" req ((-> download-handler json-handler wrap-exception) req))
   (OPTIONS "/download" req {:status 200 :headers allow-all-origin-header}))
 
+(def app
+  (-> routes
+      (wrap-resource "public"))) ;; files from resources/public are served
+
 (defn -main []
-  (ring/run-jetty #'routes {:port 8080 :join? false}))
+  (ring/run-jetty app {:port 8080 :join? false}))

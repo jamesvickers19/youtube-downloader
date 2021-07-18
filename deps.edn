@@ -3,10 +3,21 @@
         org.clojure/tools.trace {:mvn/version "0.7.10"}
         ring/ring-jetty-adapter {:mvn/version "1.8.2"}
         ring/ring-json {:mvn/version "0.5.0"}
-        compojure {:mvn/version "1.6.2"}
+        compojure/compojure {:mvn/version "1.6.2"}
         clj-http/clj-http {:mvn/version "3.12.1"}
-        org.clojure/data.json {:mvn/version "1.0.0"}}
+        org.clojure/data.json {:mvn/version "1.0.0"}
+        com.github.seancorfield/depstar {:mvn/version "2.1.267"}}
 
  :mvn/repos
-  {"jitpack.io" {:url "https://jitpack.io"}}}
+  {"jitpack.io" {:url "https://jitpack.io"}}
+
+ :paths ["src" "resources"]
+
+ :aliases
+ {
+  ; create deployable service JAR including static assets (HTML/CSS/JS) with:
+  ; clojure -X:uberjar :jar YoutubeDownloader.jar :main-class youtube-downloader.core
+  :uberjar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.1.267"}}
+            :exec-fn hf.depstar/uberjar
+            :exec-args {:aot true}}}}
 
