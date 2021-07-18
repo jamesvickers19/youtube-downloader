@@ -27,21 +27,14 @@
             (io/copy bytes zip-output-stream)
             (.closeEntry zip-output-stream)))))))
 
-; TODO use middleware or something
-(def allow-all-origin-header
-  {"Access-Control-Allow-Origin" "*"
-   "Access-Control-Allow-Headers" "*"
-   "Access-Control-Allow-Methods" "GET, POST, OPTIONS"})
-
 (defn sections-handler
   [video-id]
-  {:headers (merge allow-all-origin-header {"Content-type" "application/json"})
+  {:headers {"Content-type" "application/json"}
    :body    (json/write-str (get-sections video-id))})
 
 (defn download-video-handler
   [video-id]
-  {:headers (merge allow-all-origin-header
-                   {"Content-Type" "application/octet-stream; charset=utf-8"})
+  {:headers {"Content-Type" "application/octet-stream; charset=utf-8"}
    :body (download-audio-bytes video-id)})
 
 (defn download-handler
@@ -56,8 +49,7 @@
        :body "Failed to download sections"}
       ;:body (str error-messages)} ; TODO log error messages
       {:status 200
-       :headers (merge allow-all-origin-header
-                       {"Content-Type" "application/octet-stream; charset=utf-8"})
+       :headers {"Content-Type" "application/octet-stream; charset=utf-8"}
        :body (zip-files sections)})))
 
 (defn json-handler [handler]
@@ -69,15 +61,14 @@
          (catch Exception e
            {:status 500
             :body (.getMessage e)
-            :headers (merge allow-all-origin-header
-                            {"Content-Type" "application/text"})}))))
+            :headers {"Content-Type" "application/text"}}))))
 
 (defroutes routes
   (GET "/" [] (resource-response "public/index.html"))
   (GET "/sections/:v" [v] ((wrap-exception sections-handler) v))
   (GET "/download/:v" [v] ((wrap-exception download-video-handler) v))
   (POST "/download" req ((-> download-handler json-handler wrap-exception) req))
-  (OPTIONS "/download" req {:status 200 :headers allow-all-origin-header}))
+  (OPTIONS "/download" req {:status 200}))
 
 (def app
   (-> routes
