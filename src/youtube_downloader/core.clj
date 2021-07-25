@@ -23,7 +23,7 @@
         (doseq [section sections]
           (let [^String name (:name section)
                 bytes (get-in section [:result :out])]
-            (.putNextEntry zip-output-stream (ZipEntry. name))
+            (.putNextEntry zip-output-stream (ZipEntry. (str name ".mp3")))
             (io/copy bytes zip-output-stream)
             (.closeEntry zip-output-stream)))))))
 
