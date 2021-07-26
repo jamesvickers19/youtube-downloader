@@ -126,10 +126,9 @@ class StartForm extends React.Component {
       body: JSON.stringify(requestData),
       headers: { 'Content-Type': 'application/json'}
     };
-    console.time('download');
     this.request(
       '/download',
-      response => response.blob().then(blob => { console.timeEnd('download'); console.log(`blob size: ${blob.size}`); download(blob, "files.zip"); }),
+      response => response.blob().then(blob => download(blob, "files.zip")),
       requestParams);
   }
 
