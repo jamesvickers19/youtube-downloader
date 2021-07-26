@@ -11,7 +11,7 @@
             [ring.util.io :as ring-io]
             [clojure.java.io :as io]
             [clojure.tools.trace :refer :all])
-  (:import (java.util.zip ZipOutputStream ZipEntry))
+  (:import (java.util.zip ZipOutputStream ZipEntry Deflater))
   (:gen-class))
 
 (defn zip-files
@@ -20,6 +20,7 @@
   (ring-io/piped-input-stream
     (fn [output-stream]
       (with-open [zip-output-stream (ZipOutputStream. output-stream)]
+        (.setLevel zip-output-stream Deflater/BEST_SPEED)
         (doseq [section sections]
           (let [^String name (:name section)
                 bytes (get-in section [:result :out])]
