@@ -12,9 +12,6 @@ import reportWebVitals from './reportWebVitals';
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
 
-// TODO configurable
-const serverURL = "http://youtubeslicer.site";
-
 function download(blob, name) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
@@ -72,7 +69,7 @@ class StartForm extends React.Component {
       errorMessage: errorMsg,
       downloading: true
     });
-    fetch(`${serverURL}${endpoint}`, requestParams)
+    fetch(`${endpoint}`, requestParams)
       .then(response => {
         if (!response.ok) {
           return response.text().then(text => { throw Error(text); });
@@ -82,7 +79,7 @@ class StartForm extends React.Component {
       .then(response => responseHandler(response))
       .catch(error => {
         let msg = error.message;
-        console.log(`Request to ${serverURL} failed: ${msg}`);
+        console.log(`Request to ${endpoint} failed: ${msg}`);
         errorMsg = `Error: ${msg}`;
       })
       .finally(() => {
@@ -95,7 +92,7 @@ class StartForm extends React.Component {
 
   handleSubmit(event) {
     let fetchedVideoId = this.state.videoId;
-    this.request(`/sections/${fetchedVideoId}`, response => response.json().then(data => this.setState({
+    this.request(`sections/${fetchedVideoId}`, response => response.json().then(data => this.setState({
       videoInfo: {
         title: data.title,
         start: 0,
@@ -112,7 +109,7 @@ class StartForm extends React.Component {
     let videoId = this.state.videoId;
     let videoTitle = this.state.videoInfo.title;
     this.request(
-      `/download/${videoId}`,
+      `download/${videoId}`,
       response => response.blob().then(blob => download(blob, `${videoTitle}.mp3`)));
     event.preventDefault();
   }
@@ -128,7 +125,7 @@ class StartForm extends React.Component {
       headers: { 'Content-Type': 'application/json'}
     };
     this.request(
-      '/download',
+      'download',
       response => response.blob().then(blob => download(blob, "files.zip")),
       requestParams);
   }
