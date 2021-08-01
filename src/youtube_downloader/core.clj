@@ -75,5 +75,8 @@
   (-> routes
       (wrap-resource "public"))) ;; files from resources/public are served
 
-(defn -main []
-  (ring/run-jetty app {:port 8080 :join? false}))
+(defn -main [& args]
+  (let [port (if (seq args)
+               (Integer/parseInt (first args))
+               8080)]
+    (ring/run-jetty app {:port port :join? false})))
