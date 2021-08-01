@@ -12,7 +12,8 @@ import reportWebVitals from './reportWebVitals';
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
 
-const serverURL = "http://localhost:8080";
+// TODO configurable
+const serverURL = "http://youtubeslicer.site";
 
 function download(blob, name) {
   const link = document.createElement('a');
