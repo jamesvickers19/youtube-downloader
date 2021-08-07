@@ -29,13 +29,13 @@ function getVideoId(text) {
   {
     return null;
   }
-  if (!text.startsWith('http://www.') && !text.startsWith('https://www.'))
+  if (!text.startsWith('http://') && !text.startsWith('https://'))
   {
-    text = 'https://www.' + text;
+    text = 'https://' + text;
   }
   const url = new URL(text);
   const urlParams = new URLSearchParams(url.search);
-  return urlParams.get('v');
+  return urlParams.get('v') ?? url.pathname.substring(1);
 }
 
 class StartForm extends React.Component {
