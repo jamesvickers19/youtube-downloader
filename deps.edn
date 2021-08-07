@@ -1,10 +1,9 @@
 {:deps {
-        com.github.sealedtx/java-youtube-downloader {:mvn/version "2.4.5"}
+        com.github.sealedtx/java-youtube-downloader {:mvn/version "3.0.1"}
         org.clojure/tools.trace {:mvn/version "0.7.10"}
         ring/ring-jetty-adapter {:mvn/version "1.8.2"}
         ring/ring-json {:mvn/version "0.5.0"}
         compojure/compojure {:mvn/version "1.6.2"}
-        clj-http/clj-http {:mvn/version "3.12.1"}
         org.clojure/data.json {:mvn/version "1.0.0"}
         com.github.seancorfield/depstar {:mvn/version "2.1.267"}}
 

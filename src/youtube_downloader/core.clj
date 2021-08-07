@@ -5,7 +5,7 @@
             [ring.adapter.jetty :as ring]
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.util.response :refer [resource-response]]
-            [youtube_downloader.download :refer [download-audio-bytes get-sections get-video video-title]]
+            [youtube_downloader.download :refer [download-audio-bytes get-sections]]
             [youtube-downloader.section-videos :refer [section-video]]
             [clojure.data.json :as json]
             [ring.util.io :as ring-io]
@@ -13,6 +13,14 @@
             [clojure.tools.trace :refer :all])
   (:import (java.util.zip ZipOutputStream ZipEntry Deflater))
   (:gen-class))
+
+(defmacro time
+  {:added "1.0"}
+  [label expr]
+  `(let [start# (. System (nanoTime))
+         ret# ~expr]
+     (prn (str "Elapsed time " ~label ": " (/ (double (- (. System (nanoTime)) start#)) 1000000.0) " ms"))
+     ret#))
 
 (defn zip-files
   "Returns an inputstream (piped-input-stream) to be used directly in Ring HTTP responses"
@@ -36,14 +44,15 @@
 (defn download-video-handler
   [video-id]
   {:headers {"Content-Type" "application/octet-stream; charset=utf-8"}
-   :body (download-audio-bytes video-id)})
+   :body (time "download-audio (full)" (download-audio-bytes video-id))})
 
 (defn download-handler
   [{{:keys [video-id sections]} :params}]
-  (let [audio-bytes (download-audio-bytes video-id)
-        sections (section-video audio-bytes sections)
+  (let [audio-bytes (time "download-audio" (download-audio-bytes video-id))
+        sections (time "section-video" (doall (section-video audio-bytes sections)))
         failures (filter #(not= 0 (get-in % [:result :exit])) sections)
-        error-messages (vec (map #(get-in % [:result :err]) failures))]
+        error-messages (vec (map #(get-in % [:result :err]) failures))
+        body (time "zip-files" (do (zip-files sections)))]
     (if (seq failures)
       {:status 500
        :headers {"Content-Type" "application/text"}
@@ -51,7 +60,7 @@
       ;:body (str error-messages)} ; TODO log error messages
       {:status 200
        :headers {"Content-Type" "application/octet-stream; charset=utf-8"}
-       :body (zip-files sections)})))
+       :body body})))
 
 (defn json-handler [handler]
   (-> handler wrap-keyword-params wrap-json-params))

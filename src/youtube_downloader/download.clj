@@ -1,12 +1,12 @@
 (ns youtube_downloader.download
   (:require [clojure.tools.trace :refer :all]
             [clojure.string :refer [split-lines]]
-            [youtube-downloader.files :refer :all]
-            [clj-http.client :as client])
+            [youtube-downloader.files :refer :all])
   (:import
-    (java.io File)
     (com.github.kiulian.downloader YoutubeDownloader)
-    (com.github.kiulian.downloader.model Extension YoutubeVideo)))
+    (com.github.kiulian.downloader.model.videos VideoInfo)
+    (com.github.kiulian.downloader.downloader.request RequestVideoInfo RequestVideoStreamDownload)
+    (java.io ByteArrayOutputStream)))
 
 (defn parse-int [s] (Integer/parseInt s))
 
@@ -17,23 +17,26 @@
     (reduce + (map-indexed to-seconds amounts))))
 
 
-(defn video-description [^YoutubeVideo video]
+(defn video-description [^VideoInfo video]
   (-> video .details .description))
 
-(defn video-title [^YoutubeVideo video]
+(defn video-title [^VideoInfo video]
   (-> video .details .title))
 
-(defn video-length [^YoutubeVideo video]
+(defn video-length [^VideoInfo video]
   (-> video .details .lengthSeconds))
 
-(defn live-video? [^YoutubeVideo video]
+(defn live-video? [^VideoInfo video]
   (-> video .details .isLiveContent))
 
-(defn get-video ^YoutubeVideo [video-id]
-  (.getVideo (YoutubeDownloader.) video-id))
+(defn get-video-info ^VideoInfo [video-id]
+  (let [downloader (YoutubeDownloader.)
+        request (RequestVideoInfo. video-id)
+        response (.getVideoInfo downloader request)]
+    (.data response)))
 
-(defn get-video-not-live ^YoutubeVideo [video-id]
-  (let [v (get-video video-id)]
+(defn get-video-info-not-live ^VideoInfo [video-id]
+  (let [v (get-video-info video-id)]
     (if (live-video? v)
       (throw (Exception. (str "Video '" video-id "' is a live video")))
       v)))
@@ -53,8 +56,8 @@
 
 (defn get-sections
   ([video-id]
-   (let [vid (get-video-not-live video-id)]
-     (get-sections (video-title vid) (video-description vid) (video-length vid))))
+   (let [vid-info (get-video-info-not-live video-id)]
+     (get-sections (video-title vid-info) (video-description vid-info) (video-length vid-info))))
   ([title description overall-length]
    (let [sections (->> description section-strings (map make-section) (sort-by :start))
          with-end-time (fn [idx m]
@@ -65,28 +68,17 @@
       :length overall-length
       :sections (map-indexed with-end-time sections)})))
 
-(defn highest-quality-mp4
-  [^YoutubeVideo vid]
-  (let [formats (.findAudioWithExtension vid Extension/M4A)]
-    (apply max-key #(.averageBitrate %) formats)))
-
-(defn download-audio
-  [video-id filename]
-  (let [vid (get-video-not-live video-id)
-        audioFormat (highest-quality-mp4 vid)
-        out-dir (dir filename)]
-    (.download vid audioFormat (File. out-dir) (file-name filename) true)))
-
+; then run integration tests and try out on server
 (defn download-audio-bytes
   [video-id]
-  (let [vid (get-video-not-live video-id)
-        audioFormat (highest-quality-mp4 vid)
-        url (.url audioFormat)
-        response (client/get url {:as :byte-array})
-        status (:status response)]
-    (if (not= 200 status)
-      (throw (Exception. "Bad status code for audio" status))
-      (:body response))))
+  (let [vid (get-video-info-not-live video-id)
+        format (.bestAudioFormat vid)
+        os (ByteArrayOutputStream.)
+        request (RequestVideoStreamDownload. format os)
+        response (.downloadVideoStream (YoutubeDownloader.) request)]
+    (if (.ok response)
+      (.toByteArray os)
+      (throw (Exception. (str "Couldn't get audio for video id " video-id))))))
 
 (comment
   (get-sections "HjxZYiTpU3k")
