@@ -38,12 +38,14 @@
 
 (defn sections-handler
   [video-id]
-  {:headers {"Content-type" "application/json"}
+  {:headers {"Content-type" "application/json"
+             "Access-Control-Allow-Origin" "*"}
    :body    (json/write-str (get-sections video-id))})
 
 (defn download-video-handler
   [video-id]
-  {:headers {"Content-Type" "application/octet-stream; charset=utf-8"}
+  {:headers {"Content-Type" "application/octet-stream; charset=utf-8"
+             "Access-Control-Allow-Origin" "*"}
    :body (time "download-audio (full)" (download-audio-bytes video-id))})
 
 (defn download-handler

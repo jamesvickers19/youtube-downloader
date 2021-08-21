@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import { Grid, Cell } from "styled-css-grid";
+import lamejs from 'lamejs';
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import Loader from "react-loader-spinner";
 import VideoSection from './VideoSection'
@@ -21,6 +22,80 @@ function download(blob, name) {
   document.body.appendChild(link); // needed for firefox (?)
   link.click();
   link.remove();
+}
+
+let getAudioContext = () => new (window.AudioContext || window.webkitAudioContext)();
+
+function slice(decodedAudio, start, end, bitrate) {
+  let chans = decodedAudio.numberOfChannels;
+  if (chans !== 1 && chans !== 2) {
+    // TODO can it handle other cases?
+        throw new Error(`Can only slice audio with 1 or 2 channels but was ${chans}`);
+  }
+
+  //Compute start and end values in seconds
+  let computedStart = decodedAudio.length * start / decodedAudio.duration;
+  let computedEnd = decodedAudio.length * end / decodedAudio.duration;
+  let audioContext = getAudioContext();
+  const newBuffer = audioContext.createBuffer(
+    chans,
+    computedEnd - computedStart,
+    decodedAudio.sampleRate)
+
+  // Copy from old buffer to new with the right slice.
+  // At this point, the audio has been cut
+  for (var i = 0; i < chans; i++) {
+    newBuffer.copyToChannel(decodedAudio.getChannelData(i).slice(computedStart, computedEnd), i)
+  }
+
+  const channelData = [];
+  for (let i = 0; i < chans; ++i) {
+    channelData.push(newBuffer.getChannelData(i));
+  }
+
+  var encoder = new lamejs.Mp3Encoder(chans, decodedAudio.sampleRate, bitrate);
+  var mp3Data = [];
+  if (decodedAudio.numberOfChannels === 1) {
+    console.log('encoding mono');
+    var mp3Tmp = encoder.encodeBuffer(channelData);
+    mp3Data.push(mp3Tmp);
+    mp3Tmp = encoder.flush();
+    mp3Data.push(mp3Tmp);
+  }
+  else {
+    // TODO audio is correct length but has no apparent sound
+    // wondering if format is just weird, like it came in as mp4
+    // and lameJS might want it as mp3 already
+    console.log('encoding stereo');
+    const sampleBlockSize = 1152; //can be anything but make it a multiple of 576 to make encoders life easier
+    let leftChan = channelData[0];
+    let rightChan = channelData[1];
+
+    // scale audio encoding (otherwise it's quiet)
+    var left = new Float32Array(leftChan.length);
+    var right = new Float32Array(rightChan.length);
+    for(i = 0; i < Math.min(left.length, right.length); i++) {
+        left[i] = left[i] * 32767.5;
+        right[i] = right[i] * 32767.5;
+    }
+
+    for (i = 0; i < left.length; i += sampleBlockSize) {
+      let leftChunk = left.subarray(i, i + sampleBlockSize);
+      let rightChunk = right.subarray(i, i + sampleBlockSize);
+      let mp3buf = encoder.encodeBuffer(leftChunk, rightChunk);
+      if (mp3buf.length > 0) {
+        mp3Data.push(mp3buf);
+      }
+    }
+
+    let mp3buf = encoder.flush();   //finish writing mp3
+    if (mp3buf.length > 0) {
+        mp3Data.push(mp3buf);
+    }
+  }
+
+  console.log(`mp3Data: ${mp3Data}`);
+  return new Blob(mp3Data); //, {type: 'audio/mp3'});
 }
 
 function getVideoId(text) {
@@ -69,7 +144,7 @@ class StartForm extends React.Component {
       errorMessage: errorMsg,
       downloading: true
     });
-    fetch(`${endpoint}`, requestParams)
+    fetch(`http://localhost:8080/${endpoint}`, requestParams)
       .then(response => {
         if (!response.ok) {
           return response.text().then(text => { throw Error(text); });
@@ -115,19 +190,19 @@ class StartForm extends React.Component {
   }
 
   handleDownload(event) {
-    let requestData = {
-      'video-id': this.state.fetchedVideoId,
-      'sections': this.state.sections.filter(t => t.selected)
-    };
-    let requestParams = {
-      method: 'POST',
-      body: JSON.stringify(requestData),
-      headers: { 'Content-Type': 'application/json'}
-    };
+    let videoId = this.state.videoId;
+    // TODO probably have slice take the full audio blob and decode it
+    let audioCtx = getAudioContext();
     this.request(
-      'download',
-      response => response.blob().then(blob => download(blob, "files.zip")),
-      requestParams);
+      `download/${videoId}`,
+      response => response.blob()
+        .then(blob => blob.arrayBuffer().then(arrayBuffer => {
+          audioCtx.decodeAudioData(arrayBuffer, buffer => {
+            let slicedBlob = slice(buffer, 0, 2, 192);
+            download(slicedBlob, 'slicedBlob.mp3');
+          });
+        })
+    ));
   }
 
   onSectionSelectedChange(event) {

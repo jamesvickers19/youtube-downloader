@@ -73,9 +73,11 @@
   [video-id]
   (let [vid (get-video-info-not-live video-id)
         format (.bestAudioFormat vid)
+        formats (.audioFormats vid)
         os (ByteArrayOutputStream.)
         request (RequestVideoStreamDownload. format os)
         response (.downloadVideoStream (YoutubeDownloader.) request)]
+    (println (map #(.value (.extension %)) formats))
     (if (.ok response)
       (.toByteArray os)
       (throw (Exception. (str "Couldn't get audio for video id " video-id))))))
