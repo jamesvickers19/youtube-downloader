@@ -45,7 +45,7 @@ class StartForm extends React.Component {
     this.handleVideoUrlInputChange = this.handleVideoUrlInputChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleDownloadEntireVideo = this.handleDownloadEntireVideo.bind(this);
-    this.handleDownload = this.handleDownload.bind(this);
+    this.handleDownloadSections = this.handleDownloadSections.bind(this);
     this.onSectionSelectedChange = this.onSectionSelectedChange.bind(this);
     this.onSectionNameChange = this.onSectionNameChange.bind(this);
     this.onAllSectionsSelectedChange = this.onAllSectionsSelectedChange.bind(this);
@@ -117,7 +117,7 @@ class StartForm extends React.Component {
     event.preventDefault();
   }
 
-  handleDownload(event) {
+  handleDownloadSections(event) {
     let requestData = {
       'video-id': this.state.fetchedVideoId,
       'sections': this.state.sections.filter(t => t.selected)
@@ -220,12 +220,12 @@ class StartForm extends React.Component {
         }
         </ul>
     );
-    let downloadBtn = (
+    let downloadSectionsBtn = (
       this.nullIfNoSections(
         <button
           type="button"
           disabled={this.state.downloading}
-          onClick={this.handleDownload}>
+          onClick={this.handleDownloadSections}>
           Download selected sections
       </button>));
     let videoTitleLabel = null;
@@ -270,7 +270,7 @@ class StartForm extends React.Component {
         </Cell>
         <Cell center>{videoTitleLabel}</Cell>
         <Cell center>{downloadEntireVideoBtn}</Cell>
-        <Cell center>{downloadBtn}</Cell>
+        <Cell center>{downloadSectionsBtn}</Cell>
         <Cell center>
           {selectAllInput}
           {selectAllInputLabel}
