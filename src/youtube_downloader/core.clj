@@ -52,8 +52,9 @@
   (fn [request]
     (try (handler request)
          (catch Exception e
+           (println "Error in handler: " handler "; " (.getMessage e))
            {:status 500
-            :body (.getMessage e)
+            :body "error"
             :headers {"Content-Type" "application/text"}}))))
 
 (defroutes routes

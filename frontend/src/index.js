@@ -63,7 +63,7 @@ class StartForm extends React.Component {
     });
   }
 
-  request(endpoint, responseHandler, requestParams = null) {
+  request(endpoint, operationDescription, responseHandler, requestParams = null) {
     let errorMsg = "";
     this.setState({
       errorMessage: errorMsg,
@@ -72,15 +72,13 @@ class StartForm extends React.Component {
     fetch(`${endpoint}`, requestParams)
       .then(response => {
         if (!response.ok) {
-          return response.text().then(text => { throw Error(text); });
+          throw Error(`Non-OK status from server: ${response.status}`);
         }
         return response;
       })
       .then(response => responseHandler(response))
       .catch(error => {
-        let msg = error.message;
-        console.log(`Request to ${endpoint} failed: ${msg}`);
-        errorMsg = `Error: ${msg}`;
+        errorMsg = `Error while ${operationDescription}`;
       })
       .finally(() => {
         this.setState({
@@ -92,16 +90,20 @@ class StartForm extends React.Component {
 
   handleSubmit(event) {
     let fetchedVideoId = this.state.videoId;
-    this.request(`sections/${fetchedVideoId}`, response => response.json().then(data => this.setState({
-      videoInfo: {
-        title: data.title,
-        start: 0,
-        end: data.length,
-        selected: true
-      },
-      sections: data.sections.map(t => ({ ...t, selected: true})),
-      fetchedVideoId: fetchedVideoId
-    })));
+    this.request(
+      `sections/${fetchedVideoId}`,
+      "getting video info",
+      response => response.json().then(data => this.setState({
+        videoInfo: {
+          title: data.title,
+          start: 0,
+          end: data.length,
+          selected: true
+        },
+        sections: data.sections.map(t => ({ ...t, selected: true})),
+        fetchedVideoId: fetchedVideoId
+      }
+    )));
     event.preventDefault();
   }
 
@@ -110,6 +112,7 @@ class StartForm extends React.Component {
     let videoTitle = this.state.videoInfo.title;
     this.request(
       `download/${videoId}`,
+      "downloading video",
       response => response.blob().then(blob => download(blob, `${videoTitle}.mp3`)));
     event.preventDefault();
   }
@@ -126,6 +129,7 @@ class StartForm extends React.Component {
     };
     this.request(
       'download',
+      "downloading video sections",
       response => response.blob().then(blob => download(blob, "files.zip")),
       requestParams);
   }
