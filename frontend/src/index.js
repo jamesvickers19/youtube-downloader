@@ -166,8 +166,8 @@ class StartForm extends React.Component {
         <Loader
           type="Watch"
           color="#2ba805"
-          height={150}
-          width={150}/>);
+          height={25}
+          width={25}/>);
     }
   }
 
@@ -260,15 +260,13 @@ class StartForm extends React.Component {
         <Cell center>
           <label style={{fontSize: '30px'}}>Enter a YouTube link:</label>
         </Cell>
-        <Cell center>
-          {urlInput}
-        </Cell>
+        <Cell center>{urlInput}</Cell>
+        <Cell center>{this.downloadSpinner()}</Cell>
         <Cell center>
           {submitBtn}
         </Cell>
         <Cell center>
           {errorLabel}
-          {this.downloadSpinner()}
         </Cell>
         <Cell center>{videoTitleLabel}</Cell>
         <Cell center>{downloadEntireVideoBtn}</Cell>
