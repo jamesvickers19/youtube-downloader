@@ -177,11 +177,15 @@ class StartForm extends React.Component {
     <button
         id="submitBtn"
         type="submit"
-        disabled={!this.state.videoId}
+        disabled={!this.state.videoId || this.state.downloading}
         // show glowing animation if valid video is entered and hasn't been fetched yet
-        style={{animation: this.state.videoId && this.state.fetchedVideoId !== this.state.videoId
-          ? 'glowing 1300ms infinite'
-          : 'none'}}
+        style={{
+          animation: this.state.videoId && this.state.fetchedVideoId !== this.state.videoId
+            ? 'glowing 1300ms infinite'
+            : 'none',
+          // gray-out the button to make it clear when it's disabled 
+          'background-color': !this.state.videoId || this.state.downloading ? '#636965' : '#2ba805'
+        }}
         onClick={this.handleSubmit}>
         Submit
     </button>);
@@ -289,11 +293,3 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById('root')
 );
-
-// TODO
-// - styling
-// - client validation and/or cleaning of filenames?
-// - allow downloading audio or video; format and quality selection
-// - Button alongside each section to download separately
-// - integration tests for client (selenium ?)
-// - more integration tests for server
