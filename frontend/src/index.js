@@ -224,7 +224,8 @@ class StartForm extends React.Component {
       this.nullIfNoSections(
         <button
           type="button"
-          disabled={this.state.downloading}
+          disabled={this.state.downloading ||
+                    !this.state.sections.some(s => s.selected)}
           onClick={this.handleDownloadSections}>
           Download selected sections
       </button>));
