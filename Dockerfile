@@ -1,4 +1,4 @@
-FROM clojure:openjdk-18-tools-deps-slim-buster
+FROM openjdk:18-slim-buster
 
 WORKDIR /
 
