@@ -7,7 +7,7 @@ set -e # exit on errors
 cd frontend
 yarn build
 cd ..
-cp -r frontend/build/* resources/public/
+cp -r frontend/build/* server/resources/public/
 ##########################################################
 
 # get clojure command to use
@@ -27,5 +27,6 @@ fi
 ##########################################################
 
 # build server
+cd server
 $clojure -X:uberjar :jar YoutubeDownloader.jar :main-class youtube-downloader.core
 ##########################################################
