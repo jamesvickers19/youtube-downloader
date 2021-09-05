@@ -5,7 +5,7 @@ WORKDIR /
 RUN ["apt", "-y", "update"]
 RUN ["apt", "-y", "install", "ffmpeg"]
 
-COPY server/YoutubeDownloader.jar YoutubeDownloader.jar
+COPY YoutubeDownloader.jar YoutubeDownloader.jar
 
 EXPOSE 8080
 
