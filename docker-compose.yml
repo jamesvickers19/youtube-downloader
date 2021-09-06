@@ -5,7 +5,9 @@ services:
     ports:
       - "8080:8080"
   nginx:
-    build: nginx
+    image: nginx:alpine
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
     ports:
       - "80:80"
       #- "443:443"
