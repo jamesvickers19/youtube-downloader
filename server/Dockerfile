@@ -9,4 +9,4 @@ COPY YoutubeDownloader.jar YoutubeDownloader.jar
 
 EXPOSE 8080
 
-CMD java -Xmx512m -jar YoutubeDownloader.jar
+CMD java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMPercentage=75 -jar YoutubeDownloader.jar
