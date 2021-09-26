@@ -38,12 +38,21 @@ function getVideoId(text) {
   return urlParams.get('v') ?? url.pathname.substring(1);
 }
 
+function postJsonRequestParams(requestData) {
+  return {
+    method: 'POST',
+    body: JSON.stringify(requestData),
+    headers: { 'Content-Type': 'application/json' }
+  };
+}
+
 class StartForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {url: '', sections: []}; 
     this.handleVideoUrlInputChange = this.handleVideoUrlInputChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.onIncludeVideoChanged = this.onIncludeVideoChanged.bind(this);
     this.handleDownloadEntireVideo = this.handleDownloadEntireVideo.bind(this);
     this.handleDownloadSections = this.handleDownloadSections.bind(this);
     this.onSectionSelectedChange = this.onSectionSelectedChange.bind(this);
@@ -108,25 +117,27 @@ class StartForm extends React.Component {
   }
 
   handleDownloadEntireVideo(event) {
-    let videoId = this.state.videoId;
+    let requestData = {
+      'video-id': this.state.fetchedVideoId,
+      'include-video': this.state.includeVideo,
+    };
+    let requestParams = postJsonRequestParams(requestData);
     let videoTitle = this.state.videoInfo.title;
     this.request(
-      `download/${videoId}`,
-      "downloading video",
-      response => response.blob().then(blob => download(blob, `${videoTitle}.mp3`)));
+      `download`,
+      "downloading entire video",
+      response => response.blob().then(blob => download(blob, `${videoTitle}.mp4`)),
+      requestParams);
     event.preventDefault();
   }
 
   handleDownloadSections(event) {
     let requestData = {
       'video-id': this.state.fetchedVideoId,
-      'sections': this.state.sections.filter(t => t.selected)
+      'sections': this.state.sections.filter(t => t.selected),
+      'include-video': this.state.includeVideo,
     };
-    let requestParams = {
-      method: 'POST',
-      body: JSON.stringify(requestData),
-      headers: { 'Content-Type': 'application/json'}
-    };
+    let requestParams = postJsonRequestParams(requestData);
     this.request(
       'download',
       "downloading video sections",
@@ -139,6 +150,12 @@ class StartForm extends React.Component {
     let index = event.target.getAttribute("index");
     sections[index].selected = event.target.checked;
     this.setState({sections: sections});
+  }
+
+  onIncludeVideoChanged(event) {
+    this.setState({
+      includeVideo: event.target.checked
+    });
   }
 
   onSectionNameChange(event) {
@@ -234,7 +251,8 @@ class StartForm extends React.Component {
           Download selected sections
       </button>));
     let videoTitleLabel = null;
-    let downloadEntireVideoBtn = null;
+    let downloadFullBtn = null;
+    let includeVideoCheckbox = null;
     if (this.state.fetchedVideoId != null) {
       videoTitleLabel = (
       <div>
@@ -244,13 +262,23 @@ class StartForm extends React.Component {
         </label>
       </div>
       );
-      downloadEntireVideoBtn = (
+      downloadFullBtn = (
         <button
           type="button"
           disabled={this.state.downloading}
           onClick={this.handleDownloadEntireVideo}>
-          Download entire video
+          Download full
         </button>
+      );
+      includeVideoCheckbox = (
+        <div>
+          <label>Include video (uncheck for just audio): </label>
+          <input
+            onChange={this.onIncludeVideoChanged}
+            type="checkbox"
+            checked={this.state.includeVideo}
+          />
+        </div>
       );
     }
     return (
@@ -274,7 +302,8 @@ class StartForm extends React.Component {
           {errorLabel}
         </Cell>
         <Cell center>{videoTitleLabel}</Cell>
-        <Cell center>{downloadEntireVideoBtn}</Cell>
+        <Cell center>{includeVideoCheckbox}</Cell>
+        <Cell center>{downloadFullBtn}</Cell>
         <Cell center>{downloadSectionsBtn}</Cell>
         <Cell center>
           {selectAllInput}

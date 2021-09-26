@@ -6,7 +6,8 @@
     (com.github.kiulian.downloader YoutubeDownloader)
     (com.github.kiulian.downloader.model.videos VideoInfo)
     (com.github.kiulian.downloader.downloader.request RequestVideoInfo RequestVideoStreamDownload)
-    (java.io ByteArrayOutputStream)))
+    (java.io ByteArrayOutputStream)
+    (com.github.kiulian.downloader.model.videos.formats Format)))
 
 (defn parse-int [s] (Integer/parseInt s))
 
@@ -68,17 +69,21 @@
       :length overall-length
       :sections (map-indexed with-end-time sections)})))
 
-; then run integration tests and try out on server
-(defn download-audio-bytes
-  [video-id]
-  (let [vid (get-video-info-not-live video-id)
-        format (.bestAudioFormat vid)
-        os (ByteArrayOutputStream.)
+(defn download-format
+  [video-id format]
+  (let [os (ByteArrayOutputStream.)
         request (RequestVideoStreamDownload. format os)
         response (.downloadVideoStream (YoutubeDownloader.) request)]
     (if (.ok response)
       (.toByteArray os)
       (throw (Exception. (str "Couldn't get audio for video id " video-id))))))
+
+(defn download
+  ([video-id include-video]
+   (let [vid (get-video-info-not-live video-id)
+         format (if include-video (.bestVideoFormat vid)
+                                  (.bestAudioFormat vid))]
+     (download-format video-id format))))
 
 (comment
   (get-sections "HjxZYiTpU3k")

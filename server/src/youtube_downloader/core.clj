@@ -5,7 +5,7 @@
             [ring.adapter.jetty :as ring]
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.util.response :refer [resource-response]]
-            [youtube_downloader.download :refer [download-audio-bytes get-sections]]
+            [youtube_downloader.download :refer [download get-sections]]
             [youtube-downloader.section-videos :refer [section-video]]
             [clojure.data.json :as json]
             [ring.util.io :as ring-io]
@@ -32,18 +32,17 @@
   {:headers {"Content-type" "application/json"}
    :body    (json/write-str (get-sections video-id))})
 
-(defn download-video-handler
-  [video-id]
-  {:headers {"Content-Type" "application/octet-stream; charset=utf-8"}
-   :body (download-audio-bytes video-id)})
-
 (defn download-handler
-  [{{:keys [video-id sections]} :params}]
-  (let [audio-bytes (download-audio-bytes video-id)
-        sections (section-video audio-bytes sections)]
+  [{{:keys [video-id sections include-video]} :params}]
+  (let [content (download video-id include-video)
+        body (if sections
+               (zip-and-delete-files (map :filename (section-video content sections)))
+               content)]
     {:status 200
      :headers {"Content-Type" "application/octet-stream; charset=utf-8"}
-     :body (zip-and-delete-files (map :filename sections))}))
+     :body body}))
+    ; TODO include filename in response, use in client
+
 
 (defn json-handler [handler]
   (-> handler wrap-keyword-params wrap-json-params))
@@ -60,7 +59,6 @@
 (defroutes routes
   (GET "/" [] (resource-response "public/index.html"))
   (GET "/sections/:v" [v] ((wrap-exception sections-handler) v))
-  (GET "/download/:v" [v] ((wrap-exception download-video-handler) v))
   (POST "/download" req ((-> download-handler json-handler wrap-exception) req))
   (OPTIONS "/download" req {:status 200}))
 

@@ -29,7 +29,7 @@
     (io/delete-file expected-filename)))
 
 (deftest download-audio-tests
-  (let [audio-bytes (download-audio-bytes video-id)]
+  (let [audio-bytes (download video-id true)]
     (is (= '[B (type audio-bytes)]))
     (is (= 55230 (alength audio-bytes)))
     (let [name1 "section 1"

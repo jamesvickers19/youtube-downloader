@@ -9,7 +9,7 @@
   [input sections]
   (let [sections (map #(assoc % :filename (str (:name %) ".mp4")) sections)
         section-args (map time-args sections)
-        all-args (flatten ["ffmpeg" "-y" "-i" "pipe:" "-f" "mp4" section-args :in input])
+        all-args (flatten ["ffmpeg" "-y" "-i" "pipe:" section-args :in input])
         exec-result (apply sh all-args)]
     (if (not= 0 (:exit exec-result))
       (throw (Exception. (str "Error sectioning videos: " (:err exec-result))))
