@@ -100,7 +100,7 @@ class StartForm extends React.Component {
   handleSubmit(event) {
     let fetchedVideoId = this.state.videoId;
     this.request(
-      `sections/${fetchedVideoId}`,
+      `meta/${fetchedVideoId}`,
       "getting video info",
       response => response.json().then(data => this.setState({
         videoInfo: {
