@@ -9,4 +9,4 @@ COPY YoutubeDownloader.jar YoutubeDownloader.jar
 
 EXPOSE 8080
 
-CMD java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMPercentage=75 -jar YoutubeDownloader.jar
+CMD java -XX:MaxRAMPercentage=75 -jar YoutubeDownloader.jar
