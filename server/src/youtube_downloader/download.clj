@@ -55,10 +55,10 @@
   [[start name]]
   {:start (duration-to-seconds start) :name name})
 
-(defn get-sections
+(defn get-meta
   ([video-id]
    (let [vid-info (get-video-info-not-live video-id)]
-     (get-sections (video-title vid-info) (video-description vid-info) (video-length vid-info))))
+     (get-meta (video-title vid-info) (video-description vid-info) (video-length vid-info))))
   ([title description overall-length]
    (let [sections (->> description section-strings (map make-section) (sort-by :start))
          with-end-time (fn [idx m]
@@ -86,7 +86,7 @@
      (download-format video-id format))))
 
 (comment
-  (get-sections "HjxZYiTpU3k")
+  (get-meta "HjxZYiTpU3k")
   (download-audio "HjxZYiTpU3k" "C:\\Users\\james\\Downloads\\" "test")
   (let [response (download-audio-bytes "2dNGPkoDzh0")]
     (with-open [w (java.io.BufferedOutputStream. (java.io.FileOutputStream. "C:\\Users\\james\\Downloads\\test.mp4"))]

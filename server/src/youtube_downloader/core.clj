@@ -5,7 +5,7 @@
             [ring.adapter.jetty :as ring]
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.util.response :refer [resource-response]]
-            [youtube_downloader.download :refer [download get-sections]]
+            [youtube_downloader.download :refer [download get-meta]]
             [youtube-downloader.section-videos :refer [section-video]]
             [clojure.data.json :as json]
             [ring.util.io :as ring-io]
@@ -27,10 +27,10 @@
           (.closeEntry zip-output-stream)
           (io/delete-file f))))))
 
-(defn sections-handler
+(defn meta-handler
   [video-id]
   {:headers {"Content-type" "application/json"}
-   :body    (json/write-str (get-sections video-id))})
+   :body    (json/write-str (get-meta video-id))})
 
 (defn download-handler
   [{{:keys [video-id sections include-video]} :params}]
@@ -58,7 +58,7 @@
 
 (defroutes routes
   (GET "/" [] (resource-response "public/index.html"))
-  (GET "/sections/:v" [v] ((wrap-exception sections-handler) v))
+  (GET "/meta/:v" [v] ((wrap-exception meta-handler) v))
   (POST "/download" req ((-> download-handler json-handler wrap-exception) req))
   (OPTIONS "/download" req {:status 200}))
 

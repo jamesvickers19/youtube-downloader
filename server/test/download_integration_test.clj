@@ -9,12 +9,12 @@
 
 (def video-id "qz1EpqwMmf4")
 
-(deftest get-sections-from-youtube-tests
+(deftest get-meta-from-youtube-tests
   (is (= {:title "Voldemort Laughing"
           :length 3
           :sections [{:start 0 :end 2 :name "section 1"}
                      {:start 2 :end 3 :name "section 2"}]}
-         (get-sections video-id))))
+         (get-meta video-id))))
 
 (defn assert-size-bytes [^String filename expected-length]
   (let [contents (to-byte-array (File. filename))]
