@@ -76,12 +76,12 @@
         response (.downloadVideoStream (YoutubeDownloader.) request)]
     (if (.ok response)
       (.toByteArray os)
-      (throw (Exception. (str "Couldn't get audio for video id " video-id))))))
+      (throw (Exception. (str "Couldn't get data contents for video id " video-id))))))
 
 (defn download
   ([video-id include-video]
    (let [vid (get-video-info-not-live video-id)
-         format (if include-video (.bestVideoFormat vid)
+         format (if include-video (.bestVideoWithAudioFormat vid)
                                   (.bestAudioFormat vid))]
      (download-format video-id format))))
 
