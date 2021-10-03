@@ -35,7 +35,7 @@
   [{{:keys [video-id sections include-video]} :params}]
   (let [content (download video-id include-video)
         body (if sections
-               (time (zip-sections (section-video content sections)))
+               (zip-sections (section-video content sections))
                content)]
     {:status 200
      :headers {"Content-Type" "application/octet-stream; charset=utf-8"}
