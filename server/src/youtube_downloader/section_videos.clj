@@ -1,16 +1,39 @@
 (ns youtube-downloader.section-videos
   (:require [clojure.java.shell :refer [sh]]
-            [clojure.java.io :refer [input-stream]]))
+            [clojure.java.io :refer [input-stream]])
+  (:import (com.googlecode.mp4parser.authoring Track Movie)
+           (com.googlecode.mp4parser MemoryDataSourceImpl DataSource)
+           (com.googlecode.mp4parser.authoring.container.mp4 MovieCreator)
+           (java.util ArrayList)
+           (com.googlecode.mp4parser.authoring.tracks CroppedTrack)
+           (com.googlecode.mp4parser.authoring.builder DefaultMp4Builder)
+           (java.io ByteArrayOutputStream)
+           (java.nio.channels Channels)))
 
-(defn time-args [{:keys [filename start end]}]
-  ["-ss" (str start) "-t" (str (- end start)) "-c" "copy" filename])
+(defn sample-index
+  [^Track track time]
+  (let [durations (.getSampleDurations track)
+        timescale (double (.getTimescale (.getTrackMetaData track)))]
+    (loop [i 0
+           currentTime 0]
+      (if (>= i (alength durations))
+        i
+        (if (>= currentTime time)
+            i
+            (recur (inc i) (+ currentTime (/ (double (aget durations i)) timescale))))))))
+
+(defn get-section
+  [^bytes input start end]
+  (let [^DataSource source (MemoryDataSourceImpl. input)
+        ^Movie movie (MovieCreator/build source)
+        tracks (ArrayList. (.getTracks movie))]
+    (.clear (.getTracks movie)) ; need to clear old movie tracks to replace
+    (doseq [t tracks]
+      (.addTrack movie (CroppedTrack. t (sample-index t start) (sample-index t end))))
+    (with-open [^ByteArrayOutputStream bos (ByteArrayOutputStream.)]
+      (.writeContainer (.build (DefaultMp4Builder.) movie) (Channels/newChannel bos))
+      (.toByteArray bos))))
 
 (defn section-video
-  [input sections]
-  (let [sections (map #(assoc % :filename (str (:name %) ".mp4")) sections)
-        section-args (map time-args sections)
-        all-args (flatten ["ffmpeg" "-y" "-i" "pipe:" section-args :in input])
-        exec-result (apply sh all-args)]
-    (if (not= 0 (:exit exec-result))
-      (throw (Exception. (str "Error sectioning videos: " (:err exec-result))))
-      sections)))
+  [^bytes input sections]
+  (map #(assoc % :data (get-section input (:start %) (:end %))) sections))

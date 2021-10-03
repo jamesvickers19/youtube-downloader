@@ -14,18 +14,17 @@
   (:import (java.util.zip ZipOutputStream ZipEntry Deflater))
   (:gen-class))
 
-(defn zip-and-delete-files
+(defn zip-sections
   "Returns an inputstream (piped-input-stream) to be used directly in Ring HTTP responses"
-  [filenames]
+  [sections]
   (ring-io/piped-input-stream
     (fn [output-stream]
       (with-open [zip-output-stream (ZipOutputStream. output-stream)]
         (.setLevel zip-output-stream Deflater/BEST_SPEED)
-        (doseq [f filenames]
-          (.putNextEntry zip-output-stream (ZipEntry. ^String f))
-          (io/copy (io/file f) zip-output-stream)
-          (.closeEntry zip-output-stream)
-          (io/delete-file f))))))
+        (doseq [section sections]
+          (.putNextEntry zip-output-stream (ZipEntry. (str (:name section) ".mp4")))
+          (io/copy (:data section) zip-output-stream)
+          (.closeEntry zip-output-stream))))))
 
 (defn meta-handler
   [video-id]
@@ -36,7 +35,7 @@
   [{{:keys [video-id sections include-video]} :params}]
   (let [content (download video-id include-video)
         body (if sections
-               (zip-and-delete-files (map :filename (section-video content sections)))
+               (time (zip-sections (section-video content sections)))
                content)]
     {:status 200
      :headers {"Content-Type" "application/octet-stream; charset=utf-8"}
