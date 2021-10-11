@@ -8,6 +8,7 @@
             [youtube_downloader.download :refer [download get-meta]]
             [youtube-downloader.section-videos :refer [section-video]]
             [clojure.data.json :as json]
+            [header-utils.content-disposition :refer [encode]]
             [ring.util.io :as ring-io]
             [clojure.java.io :as io]
             [clojure.tools.trace :refer :all])
@@ -32,16 +33,22 @@
    :body    (json/write-str (get-meta video-id))})
 
 (defn download-handler
-  [{{:keys [video-id sections include-video]} :params}]
+  [{{:keys [filename video-id sections include-video]} :params}]
   (let [content (download video-id include-video)
-        body (if sections
-               (zip-sections (section-video content sections))
-               content)]
+        section-count (count sections)
+        multiple (> section-count 1)
+        body (if (nil? sections)
+               content
+               (let [sectioned (section-video content sections)]
+                 (if multiple
+                   (zip-sections sectioned)
+                   (:data (first sectioned)))))
+        [content-type extension] (if multiple ["application/zip" ".zip"]
+                                              ["video/mp4" ".mp4"])]
     {:status 200
-     :headers {"Content-Type" "application/octet-stream; charset=utf-8"}
+     :headers {"Content-Type" content-type
+               "Content-Disposition" (encode "attachment" (str filename extension))}
      :body body}))
-    ; TODO include filename in response, use in client
-
 
 (defn json-handler [handler]
   (-> handler wrap-keyword-params wrap-json-params))

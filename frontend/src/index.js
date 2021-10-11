@@ -60,7 +60,7 @@ class StartForm extends React.Component {
     this.onAllSectionsSelectedChange = this.onAllSectionsSelectedChange.bind(this);
     this.nullIfNoSections = this.nullIfNoSections.bind(this);
     this.downloadSpinner = this.downloadSpinner.bind(this);
-    this.request = this.request.bind(this);
+    this.downloadFromServer = this.downloadFromServer.bind(this);
   }
 
   handleVideoUrlInputChange(event) {
@@ -72,22 +72,33 @@ class StartForm extends React.Component {
     });
   }
 
-  request(endpoint, operationDescription, responseHandler, requestParams = null) {
+  downloadFromServer(useSections) {
+    let requestData = {
+      'video-id': this.state.fetchedVideoId,
+      'include-video': this.state.includeVideo,
+      'filename': this.state.videoInfo.title,
+    };
+    if (useSections) {
+      requestData['sections'] = this.state.sections.filter(t => t.selected);
+    }
+
+    let requestParams = postJsonRequestParams(requestData);
+    let attachmentName = '';
     let errorMsg = "";
     this.setState({
       errorMessage: errorMsg,
       downloading: true
     });
-    fetch(`${endpoint}`, requestParams)
+    fetch('download', requestParams)
       .then(response => {
-        if (!response.ok) {
-          throw Error(`Non-OK status from server: ${response.status}`);
-        }
-        return response;
+        const header = response.headers.get('Content-Disposition');
+        const parts = header.split(';');
+        attachmentName = parts[1].split('=')[1];
+        return response.blob();
       })
-      .then(response => responseHandler(response))
+      .then((blob) => download(blob, attachmentName))
       .catch(error => {
-        errorMsg = `Error while ${operationDescription}`;
+        errorMsg = 'Error, please try again';
       })
       .finally(() => {
         this.setState({
@@ -99,50 +110,43 @@ class StartForm extends React.Component {
 
   handleSubmit(event) {
     let fetchedVideoId = this.state.videoId;
-    this.request(
-      `meta/${fetchedVideoId}`,
-      "getting video info",
-      response => response.json().then(data => this.setState({
-        videoInfo: {
-          title: data.title,
-          start: 0,
-          end: data.length,
-          selected: true
-        },
-        sections: data.sections.map(t => ({ ...t, selected: true})),
-        fetchedVideoId: fetchedVideoId
-      }
-    )));
+    let errorMsg = "";
+    this.setState({
+      errorMessage: errorMsg,
+      downloading: true
+    });
+    fetch(`meta/${fetchedVideoId}`)
+      .then(response => response.json())
+      .then(data => this.setState({
+          videoInfo: {
+            title: data.title,
+            start: 0,
+            end: data.length,
+            selected: true
+          },
+          sections: data.sections.map(t => ({ ...t, selected: true})),
+          fetchedVideoId: fetchedVideoId
+        }
+      ))
+      .catch(error => {
+        errorMsg = 'Error, please try again';
+      })
+      .finally(() => {
+          this.setState({
+            downloading: false,
+            errorMessage: errorMsg,
+          });
+      });
     event.preventDefault();
   }
 
   handleDownloadEntireVideo(event) {
-    let requestData = {
-      'video-id': this.state.fetchedVideoId,
-      'include-video': this.state.includeVideo,
-    };
-    let requestParams = postJsonRequestParams(requestData);
-    let videoTitle = this.state.videoInfo.title;
-    this.request(
-      `download`,
-      "downloading entire video",
-      response => response.blob().then(blob => download(blob, `${videoTitle}.mp4`)),
-      requestParams);
+    this.downloadFromServer(false);
     event.preventDefault();
   }
 
   handleDownloadSections(event) {
-    let requestData = {
-      'video-id': this.state.fetchedVideoId,
-      'sections': this.state.sections.filter(t => t.selected),
-      'include-video': this.state.includeVideo,
-    };
-    let requestParams = postJsonRequestParams(requestData);
-    this.request(
-      'download',
-      "downloading video sections",
-      response => response.blob().then(blob => download(blob, "files.zip")),
-      requestParams);
+    this.downloadFromServer(true);
   }
 
   onSectionSelectedChange(event) {
