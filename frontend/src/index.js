@@ -72,11 +72,11 @@ class StartForm extends React.Component {
     });
   }
 
-  downloadFromServer(useSections) {
+  downloadFromServer(filename, useSections) {
     let requestData = {
       'video-id': this.state.fetchedVideoId,
       'include-video': this.state.includeVideo,
-      'filename': this.state.videoInfo.title,
+      'filename': filename,
     };
     if (useSections) {
       requestData['sections'] = this.state.sections.filter(t => t.selected);
@@ -141,12 +141,16 @@ class StartForm extends React.Component {
   }
 
   handleDownloadEntireVideo(event) {
-    this.downloadFromServer(false);
+    this.downloadFromServer(this.state.videoInfo.title, false);
     event.preventDefault();
   }
 
   handleDownloadSections(event) {
-    this.downloadFromServer(true);
+    let selectedSections = this.state.sections.filter(t => t.selected);
+    let filename = selectedSections.length > 1
+      ? this.state.videoInfo.title
+      : selectedSections[0].name;
+    this.downloadFromServer(filename, true);
   }
 
   onSectionSelectedChange(event) {
