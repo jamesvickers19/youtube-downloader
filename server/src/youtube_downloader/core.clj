@@ -73,8 +73,7 @@
       (wrap-resource "public"))) ;; files from resources/public are served
 
 (defn -main [& args]
-  ; TODO check that ffmpeg is available?
   (let [port (if (seq args)
                (Integer/parseInt (first args))
                8080)]
-    (ring/run-jetty app {:port port :join? false})))
+    (ring/run-jetty app {:port port})))
