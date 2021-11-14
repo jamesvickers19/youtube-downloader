@@ -12,6 +12,13 @@ import reportWebVitals from './reportWebVitals';
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
 
+let devMode = false;
+let serverHost = ''; // production
+if (devMode) {
+  // local development; must enable at this site
+  serverHost = 'https://cors-anywhere.herokuapp.com/https://youtubeslicer.site/';
+}
+
 function download(blob, name) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
@@ -89,7 +96,7 @@ class StartForm extends React.Component {
       errorMessage: errorMsg,
       downloading: true
     });
-    fetch('download', requestParams)
+    fetch(`${serverHost}download`, requestParams)
       .then(response => {
         const header = response.headers.get('Content-Disposition');
         const parts = header.split(';');
@@ -115,7 +122,7 @@ class StartForm extends React.Component {
       errorMessage: errorMsg,
       downloading: true
     });
-    fetch(`meta/${fetchedVideoId}`)
+    fetch(`${serverHost}meta/${fetchedVideoId}`)
       .then(response => response.json())
       .then(data => this.setState({
           videoInfo: {
