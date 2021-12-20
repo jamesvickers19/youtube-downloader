@@ -103,7 +103,7 @@ class StartForm extends React.Component {
       .then(response => {
         const header = response.headers.get('Content-Disposition');
         const parts = header.split(';');
-        attachmentName = parts[1].split('=')[1];
+        attachmentName = parts[1].split('=')[1].replace(/"/g,"");
         return response.blob();
       })
       .then((blob) => download(blob, attachmentName))
