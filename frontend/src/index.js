@@ -5,6 +5,7 @@ import { Grid, Cell } from "styled-css-grid";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import Loader from "react-loader-spinner";
 import VideoSection from './VideoSection'
+import TimeRange from './TimeRange'
 import reportWebVitals from './reportWebVitals';
 
 // If you want to start measuring performance in your app, pass a function
@@ -60,7 +61,9 @@ class StartForm extends React.Component {
     this.handleVideoUrlInputChange = this.handleVideoUrlInputChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onIncludeVideoChanged = this.onIncludeVideoChanged.bind(this);
+    this.onTimeRangeChanged = this.onTimeRangeChanged.bind(this);
     this.handleDownloadEntireVideo = this.handleDownloadEntireVideo.bind(this);
+    this.handleDownloadTimeRange = this.handleDownloadTimeRange.bind(this);
     this.handleDownloadSections = this.handleDownloadSections.bind(this);
     this.onSectionSelectedChange = this.onSectionSelectedChange.bind(this);
     this.onSectionNameChange = this.onSectionNameChange.bind(this);
@@ -79,14 +82,14 @@ class StartForm extends React.Component {
     });
   }
 
-  downloadFromServer(filename, useSections) {
+  downloadFromServer(filename, sections) {
     let requestData = {
       'video-id': this.state.fetchedVideoId,
       'include-video': this.state.includeVideo,
       'filename': filename,
     };
-    if (useSections) {
-      requestData['sections'] = this.state.sections.filter(t => t.selected);
+    if (sections) {
+      requestData['sections'] = sections;
     }
 
     let requestParams = postJsonRequestParams(requestData);
@@ -148,8 +151,22 @@ class StartForm extends React.Component {
   }
 
   handleDownloadEntireVideo(event) {
-    this.downloadFromServer(this.state.videoInfo.title, false);
+    this.downloadFromServer(this.state.videoInfo.title);
     event.preventDefault();
+  }
+
+  handleDownloadTimeRange(event) {
+    let filename = `${this.state.videoInfo.title}_custom_sections`;
+    this.downloadFromServer(
+      filename,
+      [
+        {
+          start: this.state.downloadTimeStart,
+          end: this.state.downloadTimeEnd,
+          name: filename
+        }
+      ]
+    );
   }
 
   handleDownloadSections(event) {
@@ -157,7 +174,7 @@ class StartForm extends React.Component {
     let filename = selectedSections.length > 1
       ? this.state.videoInfo.title
       : selectedSections[0].name;
-    this.downloadFromServer(filename, true);
+    this.downloadFromServer(filename, selectedSections);
   }
 
   onSectionSelectedChange(event) {
@@ -170,6 +187,13 @@ class StartForm extends React.Component {
   onIncludeVideoChanged(event) {
     this.setState({
       includeVideo: event.target.checked
+    });
+  }
+
+  onTimeRangeChanged(start, end) {
+    this.setState({
+      downloadTimeStart: start,
+      downloadTimeEnd: end
     });
   }
 
@@ -268,6 +292,7 @@ class StartForm extends React.Component {
     let videoTitleLabel = null;
     let downloadFullBtn = null;
     let includeVideoCheckbox = null;
+    let timeRangeInput = null;
     if (this.state.fetchedVideoId != null) {
       videoTitleLabel = (
       <div>
@@ -295,6 +320,20 @@ class StartForm extends React.Component {
           />
         </div>
       );
+      timeRangeInput = (
+        <div>
+          <button
+            type="button"
+            disabled={this.state.downloading}
+            onClick={this.handleDownloadTimeRange}>
+            Download time range (seconds):
+          </button>
+          <TimeRange
+            max={this.state.videoInfo.end}
+            callback={this.onTimeRangeChanged}
+          />
+        </div>
+      );
     }
     return (
     <form>
@@ -319,6 +358,7 @@ class StartForm extends React.Component {
         <Cell center>{videoTitleLabel}</Cell>
         <Cell center>{includeVideoCheckbox}</Cell>
         <Cell center>{downloadFullBtn}</Cell>
+        <Cell center>{timeRangeInput}</Cell>
         <Cell center>{downloadSectionsBtn}</Cell>
         <Cell center>
           {selectAllInput}
